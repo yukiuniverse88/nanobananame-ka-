@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Otome Prompt Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Cormorant+Garamond:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-primary: #0f0f14;
+  --bg-secondary: #1a1a24;
+  --bg-card: #22222e;
+  --bg-card-hover: #2a2a38;
+  --text-primary: #e8e4ef;
+  --text-secondary: #9a95a8;
+  --text-muted: #6b6578;
+  --accent-cyan: #7ec8d4;
+  --accent-pink: #d4a0b9;
+  --accent-gray: #8a8a9e;
+  --accent-cyan-dim: rgba(126,200,212,0.15);
+  --accent-pink-dim: rgba(212,160,185,0.15);
+  --accent-gray-dim: rgba(138,138,158,0.15);
+  --border: rgba(255,255,255,0.06);
+  --border-active: rgba(126,200,212,0.4);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-tag: 20px;
+  --shadow: 0 2px 12px rgba(0,0,0,0.3);
+  --font-body: 'Zen Kaku Gothic New', sans-serif;
+  --font-display: 'Cormorant Garamond', serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  padding-bottom: 220px;
+  overflow-x: hidden;
+}
+
+/* ===== HEADER ===== */
+.header {
+  padding: 20px 16px 12px;
+  text-align: center;
+  position: relative;
+  background: linear-gradient(180deg, rgba(126,200,212,0.08) 0%, transparent 100%);
+}
+.header h1 {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: 4px;
+  color: var(--accent-cyan);
+  text-transform: uppercase;
+}
+.header .sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 2px;
+  margin-top: 4px;
+}
+
+/* ===== LANG TOGGLE ===== */
+.lang-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 100;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--accent-cyan);
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+}
+
+/* ===== MODE SELECTOR ===== */
+.mode-selector {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  justify-content: center;
+}
+.mode-btn {
+  flex: 1;
+  max-width: 140px;
+  padding: 12px 8px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+.mode-btn.active {
+  border-color: var(--accent-cyan);
+  background: var(--accent-cyan-dim);
+  color: var(--accent-cyan);
+  box-shadow: 0 0 20px rgba(126,200,212,0.1);
+}
+.mode-btn .icon { font-size: 20px; display: block; margin-bottom: 4px; }
+
+/* ===== CATEGORY SECTIONS ===== */
+.category {
+  margin: 8px 12px;
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: all 0.3s;
+}
+.category.hidden { display: none; }
+.cat-header {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+.cat-header h2 {
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cat-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.cat-dot.cyan { background: var(--accent-cyan); }
+.cat-dot.pink { background: var(--accent-pink); }
+.cat-dot.gray { background: var(--accent-gray); }
+.cat-arrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform 0.3s;
+}
+.cat-header.open .cat-arrow { transform: rotate(180deg); }
+.cat-count {
+  font-size: 11px;
+  color: var(--accent-cyan);
+  margin-right: 8px;
+  min-width: 20px;
+  text-align: right;
+}
+.cat-body {
+  padding: 0 12px 14px;
+  display: none;
+}
+.cat-body.open { display: block; }
+
+/* ===== SUBCATEGORY ===== */
+.subcat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 10px 0 6px;
+  letter-spacing: 1px;
+}
+
+/* ===== TAGS ===== */
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag {
+  padding: 7px 14px;
+  border-radius: var(--radius-tag);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.25s;
+  user-select: none;
+  white-space: nowrap;
+}
+.tag:active { transform: scale(0.95); }
+.tag.selected {
+  border-color: var(--accent-cyan);
+  background: var(--accent-cyan-dim);
+  color: var(--accent-cyan);
+}
+.tag.selected.pink-tag {
+  border-color: var(--accent-pink);
+  background: var(--accent-pink-dim);
+  color: var(--accent-pink);
+}
+
+/* ===== PRESET SECTION ===== */
+.preset-area {
+  padding: 0 12px 14px;
+}
+.preset-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.preset-card.selected {
+  border-color: var(--accent-pink);
+  background: var(--accent-pink-dim);
+}
+.preset-info { flex:1; }
+.preset-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.preset-detail { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.preset-actions { display: flex; gap: 8px; }
+.preset-actions button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+}
+.add-preset-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.add-preset-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  top:0; left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.7);
+  z-index: 200;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+}
+.modal h3 {
+  font-size: 16px;
+  margin-bottom: 16px;
+  color: var(--accent-cyan);
+}
+.modal label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 4px;
+  margin-top: 12px;
+}
+.modal input, .modal select {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  outline: none;
+}
+.modal input:focus, .modal select:focus { border-color: var(--accent-cyan); }
+.modal-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+.modal-btns button {
+  flex: 1;
+  padding: 10px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.btn-cancel { background: var(--bg-card); color: var(--text-secondary); }
+.btn-save { background: var(--accent-cyan); color: var(--bg-primary); }
+.btn-delete { background: #d44; color: #fff; }
+
+/* ===== FREE TEXT ===== */
+.free-text-area {
+  margin: 8px 12px;
+}
+.free-text-area textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  resize: vertical;
+  outline: none;
+}
+.free-text-area textarea:focus { border-color: var(--accent-cyan); }
+.free-text-area label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  display: block;
+}
+
+/* ===== PROMPT OUTPUT ===== */
+.prompt-output {
+  position: fixed;
+  bottom: 0;
+  left: 0; right: 0;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+  z-index: 50;
+  backdrop-filter: blur(20px);
+  background: rgba(26,26,36,0.95);
+}
+.prompt-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  min-height: 60px;
+  max-height: 100px;
+  overflow-y: auto;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  word-break: break-all;
+  margin-bottom: 8px;
+}
+.prompt-box:empty::before {
+  content: 'タグを選択するとここにプロンプトが表示されます...';
+  color: var(--text-muted);
+}
+.prompt-actions {
+  display: flex;
+  gap: 8px;
+}
+.copy-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-pink));
+  color: var(--bg-primary);
+  letter-spacing: 1px;
+}
+.copy-btn:active { transform: scale(0.97); opacity: 0.8; }
+.copy-btn.copied {
+  background: linear-gradient(135deg, #5ab88a, #7ec8d4);
+}
+.clear-btn {
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.8);
+  background: rgba(126,200,212,0.95);
+  color: var(--bg-primary);
+  padding: 16px 32px;
+  border-radius: var(--radius);
+  font-size: 15px;
+  font-weight: 700;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s;
+  z-index: 300;
+  letter-spacing: 1px;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<button class="lang-toggle" onclick="toggleLang()">EN/JP</button>
+
+<div class="header">
+  <h1>Otome Prompt</h1>
+  <div class="sub">STILL IMAGE PROMPT BUILDER</div>
+</div>
+
+<!-- MODE SELECTOR -->
+<div class="mode-selector">
+  <button class="mode-btn active" data-mode="male" onclick="setMode('male')">
+    <span class="icon">♂</span>男性ソロ
+  </button>
+  <button class="mode-btn" data-mode="female" onclick="setMode('female')">
+    <span class="icon">♀</span>女性ソロ
+  </button>
+  <button class="mode-btn" data-mode="couple" onclick="setMode('couple')">
+    <span class="icon">♂♀</span>カップリング
+  </button>
+</div>
+
+<!-- CATEGORIES CONTAINER -->
+<div id="categories"></div>
+
+<!-- FREE TEXT -->
+<div class="free-text-area">
+  <label>✏️ フリーテキスト（自由入力）</label>
+  <textarea id="freeText" placeholder="参照画像への指示文やその他追加プロンプトを入力..." oninput="updatePrompt()"></textarea>
+</div>
+
+<!-- PROMPT OUTPUT -->
+<div class="prompt-output">
+  <div class="prompt-box" id="promptBox"></div>
+  <div class="prompt-actions">
+    <button class="copy-btn" id="copyBtn" onclick="copyPrompt()">📋 コピー</button>
+    <button class="clear-btn" onclick="clearAll()">🗑 全消去</button>
+  </div>
+</div>
+
+<!-- PRESET MODAL -->
+<div class="modal-overlay" id="presetModal">
+  <div class="modal">
+    <h3 id="modalTitle">プリセット追加</h3>
+    <label>キャラ名</label>
+    <input type="text" id="presetName" placeholder="例：雪間">
+    <label>性別</label>
+    <select id="presetGender">
+      <option value="male">男性</option>
+      <option value="female">女性</option>
+    </select>
+    <label>身長（cm）</label>
+    <input type="number" id="presetHeight" placeholder="185">
+    <label>体重（kg）</label>
+    <input type="number" id="presetWeight" placeholder="85">
+    <label>体型タイプ</label>
+    <select id="presetBodyType">
+      <option value="ぽっちゃりとした体型">ぽっちゃりとした体型</option>
+      <option value="しっかりとした身体つき">しっかりとした身体つき</option>
+      <option value="筋肉質な体型">筋肉質な体型</option>
+      <option value="細身の体型">細身の体型</option>
+      <option value="スレンダーな体型">スレンダーな体型</option>
+      <option value="グラマラスな体型">グラマラスな体型</option>
+    </select>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-delete" id="deletePresetBtn" onclick="deletePreset()" style="display:none">削除</button>
+      <button class="btn-save" onclick="savePreset()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== DATA =====
+let currentMode = 'male';
+let currentLang = 'jp'; // 'jp' or 'en'
+let selectedTags = new Set();
+let selectedPresets = { male: null, female: null };
+let presets = JSON.parse(localStorage.getItem('otomePresets') || '[]');
+let editingPresetId = null;
+
+const CATEGORIES = [
+  {
+    id: 'quality', title: '画像の質', titleEn: 'Quality', dot: 'cyan', modes: ['male','female','couple'],
+    subcats: [{
+      label: '', items: [
+        { jp: '傑作', en: 'masterpiece' },
+        { jp: '最高品質', en: 'best quality' },
+        { jp: '非常に詳細', en: 'ultra detailed' },
+        { jp: '高解像度', en: 'high resolution' },
+        { jp: 'アニメイラスト', en: 'anime illustration' },
+        { jp: '鮮やかな色彩', en: 'vivid colors' },
+        { jp: 'プロフェッショナルな照明', en: 'professional lighting' },
+        { jp: '美しい色使い', en: 'beautiful color palette' },
+        { jp: '繊細なタッチ', en: 'delicate art style' },
+      ]
+    }]
+  },
+  {
+    id: 'style', title: '画風', titleEn: 'Style', dot: 'pink', modes: ['male','female','couple'],
+    subcats: [{
+      label: '', items: [
+        { jp: '乙女ゲームCG', en: 'otome game CG' },
+        { jp: 'ビジュアルノベル風', en: 'visual novel style' },
+        { jp: 'アニメキービジュアル', en: 'anime key visual' },
+        { jp: '少女漫画風', en: 'shoujo manga style' },
+        { jp: 'ソフトアニメ', en: 'soft anime aesthetic' },
+        { jp: 'シネマティックアニメ', en: 'cinematic anime' },
+        { jp: 'ドラマチックイラスト', en: 'dramatic illustration' },
+        { jp: '繊細な水彩風', en: 'delicate watercolor style' },
+        { jp: 'ゲームスチル風', en: 'game event CG style' },
+      ]
+    }]
+  },
+  {
+    id: 'composition', title: '構図・カメラ', titleEn: 'Composition', dot: 'cyan', modes: ['male','female','couple'],
+    subcats: [
+      { label: '距離感', labelEn: 'Distance', items: [
+        { jp: '顔アップ', en: 'close-up' },
+        { jp: '胸上', en: 'bust shot' },
+        { jp: '上半身', en: 'upper body' },
+        { jp: '全身', en: 'full body' },
+        { jp: 'ロングショット', en: 'long shot' },
+      ]},
+      { label: 'アングル', labelEn: 'Angle', items: [
+        { jp: '上から', en: 'from above' },
+        { jp: '下から', en: 'from below' },
+        { jp: '斜め', en: 'dutch angle' },
+        { jp: '肩越し', en: 'over the shoulder' },
+        { jp: '一人称視点', en: 'POV' },
+        { jp: '横顔', en: 'side view' },
+        { jp: '後ろ姿', en: 'back view' },
+        { jp: 'ダイナミック', en: 'dynamic angle' },
+      ]},
+      { label: '構図', labelEn: 'Layout', items: [
+        { jp: '左右対称', en: 'symmetrical composition' },
+        { jp: '映画的構図', en: 'cinematic composition' },
+        { jp: '三分割構図', en: 'rule of thirds' },
+        { jp: '中央配置', en: 'center composition' },
+        { jp: 'フレーム構図', en: 'framed composition' },
+      ]}
+    ]
+  },
+  {
+    id: 'expression', title: '表情', titleEn: 'Expression', dot: 'pink', modes: ['male','female','couple'],
+    subcats: [
+      { label: '優しい', labelEn: 'Gentle', items: [
+        { jp: '穏やかな微笑み', en: 'gentle smile' },
+        { jp: '温かい笑顔', en: 'warm smile' },
+        { jp: '柔らかいまなざし', en: 'soft gaze' },
+        { jp: '慈愛の目', en: 'tender eyes' },
+        { jp: '愛情あふれる表情', en: 'loving expression' },
+      ]},
+      { label: 'かっこいい', labelEn: 'Cool', items: [
+        { jp: '自信のある笑み', en: 'confident smirk' },
+        { jp: '鋭いまなざし', en: 'sharp gaze' },
+        { jp: 'クールな表情', en: 'cool expression' },
+        { jp: '強い目力', en: 'intense eyes' },
+        { jp: '恐れ知らずの顔', en: 'fearless look' },
+      ]},
+      { label: '甘い', labelEn: 'Sweet', items: [
+        { jp: '頬を赤らめる', en: 'blushing' },
+        { jp: '恥ずかしそうな笑顔', en: 'shy smile' },
+        { jp: '照れて目をそらす', en: 'looking away shyly' },
+        { jp: 'うろたえた表情', en: 'flustered' },
+        { jp: '恋する瞳', en: 'lovestruck eyes' },
+        { jp: '上目遣い', en: 'looking up through lashes' },
+      ]},
+      { label: '切ない', labelEn: 'Melancholic', items: [
+        { jp: '悲しげな微笑み', en: 'sad smile' },
+        { jp: '涙ぐんだ目', en: 'teary eyes' },
+        { jp: '物憂げな表情', en: 'melancholic expression' },
+        { jp: '遠くを見つめる', en: 'longing gaze' },
+        { jp: 'ほろ苦い笑み', en: 'bittersweet smile' },
+        { jp: '泣き顔', en: 'crying' },
+      ]},
+      { label: 'ワイルド', labelEn: 'Wild', items: [
+        { jp: 'ワイルドな笑み', en: 'wild grin' },
+        { jp: '獰猛な表情', en: 'fierce expression' },
+        { jp: '肉食系のまなざし', en: 'predatory gaze' },
+        { jp: 'したり顔', en: 'smug look' },
+        { jp: '危険な微笑み', en: 'dangerous smile' },
+        { jp: '不敵な笑み', en: 'defiant grin' },
+      ]},
+      { label: '色気', labelEn: 'Seductive', items: [
+        { jp: '色っぽいまなざし', en: 'seductive gaze' },
+        { jp: '流し目', en: 'half-lidded eyes' },
+        { jp: '色気のある目', en: 'bedroom eyes' },
+        { jp: '魅惑的な微笑み', en: 'alluring smile' },
+        { jp: '艶のある表情', en: 'sultry look' },
+      ]},
+      { label: '幸せ', labelEn: 'Happy', items: [
+        { jp: '満面の笑み', en: 'bright smile' },
+        { jp: '笑っている', en: 'laughing' },
+        { jp: '嬉しそうな表情', en: 'joyful expression' },
+        { jp: '喜びに満ちた顔', en: 'beaming' },
+        { jp: '大喜び', en: 'overjoyed' },
+        { jp: 'いたずらっぽい笑顔', en: 'mischievous smile' },
+      ]},
+      { label: '真剣', labelEn: 'Serious', items: [
+        { jp: '真剣な表情', en: 'serious expression' },
+        { jp: '決意の目', en: 'determined eyes' },
+        { jp: '集中したまなざし', en: 'focused gaze' },
+        { jp: '覚悟の顔', en: 'resolute look' },
+        { jp: '怒りの表情', en: 'angry expression' },
+        { jp: '歯を食いしばる', en: 'clenched teeth' },
+      ]},
+      { label: '驚き', labelEn: 'Surprise', items: [
+        { jp: '驚いた表情', en: 'surprised expression' },
+        { jp: '目を見開く', en: 'wide eyes' },
+        { jp: 'ハッとした顔', en: 'stunned look' },
+        { jp: '呆然とする', en: 'dazed expression' },
+      ]},
+    ]
+  },
+  {
+    id: 'pose_male', title: 'ポーズ（男性）', titleEn: 'Pose (Male)', dot: 'cyan', modes: ['male','couple'],
+    subcats: [
+      { label: 'かっこいい系', labelEn: 'Cool', items: [
+        { jp: '腕組み', en: 'arms crossed' },
+        { jp: '顎に手を当てる', en: 'hand on chin' },
+        { jp: 'ネクタイを緩める', en: 'loosening necktie' },
+        { jp: '髪をかき上げる', en: 'running hand through hair' },
+        { jp: 'ポケットに手', en: 'hands in pockets' },
+        { jp: '壁に寄りかかる', en: 'leaning against wall' },
+        { jp: '腕まくり', en: 'rolling up sleeves' },
+        { jp: '見下ろす', en: 'looking down at viewer' },
+        { jp: 'ジャケットを肩にかける', en: 'jacket over shoulder' },
+      ]},
+      { label: '日常系', labelEn: 'Daily', items: [
+        { jp: '振り返り', en: 'looking back' },
+        { jp: '手を差し出す', en: 'reaching out hand' },
+        { jp: '座って脚を組む', en: 'sitting with crossed legs' },
+        { jp: '本を読む', en: 'reading a book' },
+        { jp: 'コーヒーを持つ', en: 'holding coffee cup' },
+        { jp: 'グラスを傾ける', en: 'holding wine glass' },
+        { jp: 'スマホを見る', en: 'looking at phone' },
+        { jp: '頬杖をつく', en: 'resting chin on hand' },
+      ]},
+      { label: 'アクティブ系', labelEn: 'Active', items: [
+        { jp: 'ピアノを弾く', en: 'playing piano' },
+        { jp: '刀を構える', en: 'holding sword' },
+        { jp: 'ギターを弾く', en: 'playing guitar' },
+        { jp: 'ダンベルを持つ', en: 'lifting dumbbell' },
+        { jp: '走る', en: 'running' },
+        { jp: '料理をする', en: 'cooking' },
+        { jp: 'バイクにまたがる', en: 'sitting on motorcycle' },
+      ]},
+    ]
+  },
+  {
+    id: 'pose_female', title: 'ポーズ（女性）', titleEn: 'Pose (Female)', dot: 'pink', modes: ['female','couple'],
+    subcats: [
+      { label: 'かわいい系', labelEn: 'Cute', items: [
+        { jp: '髪をなびかせる', en: 'hair flowing in wind' },
+        { jp: '振り返り微笑む', en: 'looking back with smile' },
+        { jp: '花を持つ', en: 'holding flowers' },
+        { jp: '頬に手を当てる', en: 'hand on cheek' },
+        { jp: 'スカートを押さえる', en: 'holding down skirt' },
+        { jp: '手を振る', en: 'waving hand' },
+        { jp: '両手を胸の前で組む', en: 'hands clasped at chest' },
+        { jp: '上目遣いで見上げる', en: 'looking up at viewer' },
+      ]},
+      { label: '落ち着いた系', labelEn: 'Calm', items: [
+        { jp: '座ってほおづえ', en: 'sitting with chin on hand' },
+        { jp: '傘をさす', en: 'holding umbrella' },
+        { jp: '膝を抱える', en: 'hugging knees' },
+        { jp: 'カップを両手で持つ', en: 'holding cup with both hands' },
+        { jp: '帽子を押さえる', en: 'holding hat' },
+        { jp: '読書中', en: 'reading a book' },
+        { jp: '窓辺に座る', en: 'sitting by window' },
+      ]},
+      { label: 'エレガント系', labelEn: 'Elegant', items: [
+        { jp: '踊るように回る', en: 'twirling gracefully' },
+        { jp: '髪を耳にかける', en: 'tucking hair behind ear' },
+        { jp: 'ドレスの裾を持つ', en: 'lifting dress hem' },
+        { jp: '背中を向ける', en: 'back turned to viewer' },
+        { jp: '鏡を見る', en: 'looking in mirror' },
+      ]},
+    ]
+  },
+  {
+    id: 'pose_couple', title: 'ポーズ（カップリング）', titleEn: 'Pose (Couple)', dot: 'pink', modes: ['couple'],
+    subcats: [
+      { label: '定番ロマンス', labelEn: 'Classic Romance', items: [
+        { jp: '壁ドン', en: 'kabedon, wall slam' },
+        { jp: 'お姫様抱っこ', en: 'princess carry' },
+        { jp: '後ろからハグ', en: 'hug from behind, back hug' },
+        { jp: '正面ハグ', en: 'embrace, hugging face to face' },
+        { jp: '額をくっつける', en: 'foreheads touching' },
+        { jp: '手を繋ぐ', en: 'holding hands' },
+        { jp: '指を絡める', en: 'interlocking fingers' },
+        { jp: 'あごクイ', en: 'tilting chin up' },
+        { jp: '頭ポンポン', en: 'patting head gently' },
+        { jp: '引き寄せる', en: 'pulling close' },
+        { jp: '腰に手を回す', en: 'arm around waist' },
+      ]},
+      { label: 'ドラマチック', labelEn: 'Dramatic', items: [
+        { jp: '手首を掴む', en: 'grabbing wrist' },
+        { jp: '腕を掴んで振り向かせる', en: 'grabbing arm and turning around' },
+        { jp: '雨の中見つめ合う', en: 'gazing at each other in rain' },
+        { jp: '涙を拭う', en: 'wiping tears' },
+        { jp: '上着をかける', en: 'draping jacket over shoulders' },
+        { jp: '離れそうな手を掴む', en: 'reaching for departing hand' },
+        { jp: '背中合わせ', en: 'standing back to back' },
+        { jp: '倒れるのを支える', en: 'catching someone falling' },
+      ]},
+      { label: '甘い日常', labelEn: 'Sweet Daily', items: [
+        { jp: '膝枕', en: 'lap pillow' },
+        { jp: '肩にもたれる', en: 'leaning on shoulder' },
+        { jp: 'おでこにキス', en: 'forehead kiss' },
+        { jp: '手にキス', en: 'kiss on hand' },
+        { jp: '一緒に料理', en: 'cooking together' },
+        { jp: '相合傘', en: 'sharing umbrella' },
+        { jp: 'ソファで寄り添う', en: 'cuddling on sofa' },
+        { jp: '一緒に眠る', en: 'sleeping together peacefully' },
+        { jp: '耳元でささやく', en: 'whispering in ear' },
+        { jp: '写真を撮る', en: 'taking photo together' },
+        { jp: '同じイヤホン', en: 'sharing earphones' },
+      ]},
+      { label: 'イベント', labelEn: 'Event', items: [
+        { jp: 'ダンス', en: 'dancing together, ballroom dance' },
+        { jp: 'プロポーズ', en: 'proposal, on one knee' },
+        { jp: '結婚式', en: 'wedding ceremony' },
+        { jp: 'バージンロード', en: 'walking down the aisle' },
+        { jp: 'ケーキ入刀', en: 'cutting wedding cake' },
+        { jp: 'ファーストダンス', en: 'first dance' },
+        { jp: '花束を渡す', en: 'giving bouquet' },
+        { jp: '告白シーン', en: 'confession scene' },
+        { jp: '再会', en: 'reunion scene' },
+        { jp: 'お祭りデート', en: 'festival date' },
+        { jp: 'クリスマスデート', en: 'christmas date' },
+      ]},
+    ]
+  },
+  {
+    id: 'outfit_male', title: '衣装（男性）', titleEn: 'Outfit (Male)', dot: 'gray', modes: ['male','couple'],
+    subcats: [
+      { label: 'フォーマル', labelEn: 'Formal', items: [
+        { jp: 'スーツ', en: 'suit' },
+        { jp: 'タキシード', en: 'tuxedo' },
+        { jp: '白スーツ', en: 'white suit' },
+        { jp: 'ネイビーブレザー', en: 'navy blazer' },
+        { jp: 'ベスト＋シャツ', en: 'vest and dress shirt' },
+        { jp: '燕尾服', en: 'tailcoat' },
+        { jp: '蝶ネクタイ', en: 'bow tie' },
+      ]},
+      { label: 'カジュアル', labelEn: 'Casual', items: [
+        { jp: '開襟シャツ', en: 'open collar shirt' },
+        { jp: 'Tシャツ＋ジーンズ', en: 't-shirt and jeans' },
+        { jp: 'パーカー', en: 'hoodie' },
+        { jp: 'レザージャケット', en: 'leather jacket' },
+        { jp: 'カーディガン', en: 'cardigan' },
+        { jp: '腕まくりシャツ', en: 'shirt with rolled-up sleeves' },
+        { jp: 'ニットセーター', en: 'knit sweater' },
+        { jp: 'ロングコート', en: 'long coat' },
+      ]},
+      { label: '和装', labelEn: 'Japanese', items: [
+        { jp: '着物', en: 'kimono' },
+        { jp: '浴衣', en: 'yukata' },
+        { jp: '袴', en: 'hakama' },
+        { jp: '羽織', en: 'haori' },
+      ]},
+      { label: '制服・職業', labelEn: 'Uniform', items: [
+        { jp: '学生服', en: 'school uniform' },
+        { jp: '軍服', en: 'military uniform' },
+        { jp: '執事服', en: 'butler uniform' },
+        { jp: 'シェフコート', en: 'chef coat' },
+        { jp: '白衣', en: 'doctor coat' },
+        { jp: '警察官制服', en: 'police uniform' },
+        { jp: '消防士', en: 'firefighter uniform' },
+      ]},
+      { label: 'ファンタジー', labelEn: 'Fantasy', items: [
+        { jp: '騎士の鎧', en: 'knight armor' },
+        { jp: '王子の衣装', en: 'royal prince outfit' },
+        { jp: 'マント＋王冠', en: 'cape and crown' },
+        { jp: '魔法使いのローブ', en: 'mage robe' },
+        { jp: '吸血鬼風', en: 'vampire-style outfit' },
+        { jp: '海賊衣装', en: 'pirate outfit' },
+      ]},
+      { label: 'スポーツ', labelEn: 'Sports', items: [
+        { jp: 'タンクトップ', en: 'tank top' },
+        { jp: 'スポーツウェア', en: 'sportswear' },
+        { jp: 'ジム着', en: 'gym clothes' },
+        { jp: '水着', en: 'swimwear' },
+        { jp: 'バスケユニフォーム', en: 'basketball jersey' },
+      ]},
+    ]
+  },
+  {
+    id: 'outfit_female', title: '衣装（女性）', titleEn: 'Outfit (Female)', dot: 'pink', modes: ['female','couple'],
+    subcats: [
+      { label: 'フォーマル', labelEn: 'Formal', items: [
+        { jp: 'イブニングドレス', en: 'evening dress' },
+        { jp: 'カクテルドレス', en: 'cocktail dress' },
+        { jp: 'ウェディングドレス', en: 'wedding dress' },
+        { jp: 'ロングドレス', en: 'long gown' },
+        { jp: 'マーメイドドレス', en: 'mermaid dress' },
+      ]},
+      { label: 'カジュアル', labelEn: 'Casual', items: [
+        { jp: 'サンドレス', en: 'sundress' },
+        { jp: 'ブラウス＋スカート', en: 'blouse and skirt' },
+        { jp: 'オーバーサイズセーター', en: 'oversized sweater' },
+        { jp: 'デニムジャケット', en: 'denim jacket' },
+        { jp: 'ニットワンピース', en: 'knit dress' },
+        { jp: 'ロングスカート', en: 'long skirt' },
+        { jp: 'ワンピース', en: 'one-piece dress' },
+      ]},
+      { label: '和装', labelEn: 'Japanese', items: [
+        { jp: '振袖', en: 'furisode' },
+        { jp: '浴衣', en: 'yukata' },
+        { jp: '袴', en: 'hakama' },
+        { jp: 'かんざし付き', en: 'with kanzashi hair ornament' },
+      ]},
+      { label: '制服・職業', labelEn: 'Uniform', items: [
+        { jp: 'セーラー服', en: 'school uniform, sailor uniform' },
+        { jp: 'OLスーツ', en: 'office lady suit' },
+        { jp: 'メイド服', en: 'maid outfit' },
+        { jp: 'ナース服', en: 'nurse outfit' },
+        { jp: 'エプロン', en: 'apron' },
+      ]},
+      { label: 'ファンタジー', labelEn: 'Fantasy', items: [
+        { jp: 'プリンセスドレス', en: 'princess dress' },
+        { jp: '鎧ドレス', en: 'armor dress' },
+        { jp: '魔女衣装', en: 'witch outfit' },
+        { jp: '妖精ドレス', en: 'fairy dress' },
+        { jp: '巫女服', en: 'shrine maiden outfit' },
+      ]},
+      { label: 'イベント', labelEn: 'Event', items: [
+        { jp: 'パーティードレス', en: 'party dress' },
+        { jp: '水着', en: 'swimsuit' },
+        { jp: 'パジャマ', en: 'pajamas' },
+        { jp: 'バスローブ', en: 'bathrobe' },
+      ]},
+    ]
+  },
+  {
+    id: 'accessory', title: 'アクセサリー', titleEn: 'Accessory', dot: 'gray', modes: ['male','female','couple'],
+    subcats: [{
+      label: '', items: [
+        { jp: 'メガネ', en: 'glasses' },
+        { jp: 'サングラス', en: 'sunglasses' },
+        { jp: 'ネックレス', en: 'necklace' },
+        { jp: 'イヤリング', en: 'earrings' },
+        { jp: '腕時計', en: 'wristwatch' },
+        { jp: '指輪', en: 'ring' },
+        { jp: 'チェーン', en: 'chain accessory' },
+        { jp: 'ヘアピン', en: 'hair pin' },
+        { jp: 'リボン', en: 'ribbon' },
+        { jp: 'ティアラ', en: 'tiara' },
+        { jp: 'ベール', en: 'veil' },
+        { jp: 'マフラー', en: 'scarf' },
+        { jp: '手袋', en: 'gloves' },
+        { jp: '花飾り', en: 'flower hair accessory' },
+      ]
+    }]
+  },
+  {
+    id: 'hair_male', title: '髪型（男性）', titleEn: 'Hair (Male)', dot: 'cyan', modes: ['male','couple'],
+    subcats: [
+      { label: '長さ', labelEn: 'Length', items: [
+        { jp: 'ショート', en: 'short hair' },
+        { jp: 'ミディアム', en: 'medium length hair' },
+        { jp: 'ロング', en: 'long hair' },
+        { jp: 'ベリーショート', en: 'very short hair' },
+      ]},
+      { label: 'スタイル', labelEn: 'Style', items: [
+        { jp: 'オールバック', en: 'slicked back hair' },
+        { jp: 'ウルフカット', en: 'wolf cut' },
+        { jp: 'マッシュ', en: 'bowl cut, mushroom hair' },
+        { jp: 'ポニーテール', en: 'ponytail' },
+        { jp: 'ハーフアップ', en: 'half up hair' },
+        { jp: 'サイドパート', en: 'side-parted hair' },
+        { jp: '無造作ヘア', en: 'messy hair, tousled hair' },
+        { jp: '前髪あり', en: 'with bangs' },
+        { jp: '前髪なし', en: 'forehead showing' },
+        { jp: 'お団子', en: 'man bun' },
+      ]},
+      { label: '髪色', labelEn: 'Color', items: [
+        { jp: '黒髪', en: 'black hair' },
+        { jp: '茶髪', en: 'brown hair' },
+        { jp: '金髪', en: 'blonde hair' },
+        { jp: '白髪・銀髪', en: 'white hair, silver hair' },
+        { jp: '赤髪', en: 'red hair' },
+        { jp: '青髪', en: 'blue hair' },
+        { jp: '紫髪', en: 'purple hair' },
+        { jp: 'ダークブラウン', en: 'dark brown hair' },
+        { jp: 'アッシュグレー', en: 'ash gray hair' },
+      ]},
+    ]
+  },
+  {
+    id: 'hair_female', title: '髪型（女性）', titleEn: 'Hair (Female)', dot: 'pink', modes: ['female','couple'],
+    subcats: [
+      { label: '長さ', labelEn: 'Length', items: [
+        { jp: 'ショート', en: 'short hair' },
+        { jp: 'ミディアム', en: 'medium length hair' },
+        { jp: 'ロングヘア', en: 'long hair' },
+        { jp: 'スーパーロング', en: 'very long hair' },
+      ]},
+      { label: 'スタイル', labelEn: 'Style', items: [
+        { jp: 'ストレート', en: 'straight hair' },
+        { jp: 'ウェーブ', en: 'wavy hair' },
+        { jp: 'ポニーテール', en: 'ponytail' },
+        { jp: 'ツインテール', en: 'twin tails' },
+        { jp: 'お団子', en: 'hair bun' },
+        { jp: '三つ編み', en: 'braid' },
+        { jp: 'サイドテール', en: 'side ponytail' },
+        { jp: '編み込み', en: 'braided updo' },
+        { jp: 'ハーフアップ', en: 'half up hair' },
+        { jp: 'アップスタイル', en: 'updo hairstyle' },
+        { jp: '前髪ぱっつん', en: 'blunt bangs' },
+        { jp: '前髪流し', en: 'side-swept bangs' },
+      ]},
+      { label: '髪色', labelEn: 'Color', items: [
+        { jp: '黒髪', en: 'black hair' },
+        { jp: '茶髪', en: 'brown hair' },
+        { jp: '金髪', en: 'blonde hair' },
+        { jp: '白髪・銀髪', en: 'white hair, silver hair' },
+        { jp: 'ピンク髪', en: 'pink hair' },
+        { jp: '赤髪', en: 'red hair' },
+        { jp: 'ダークブラウン', en: 'dark brown hair' },
+      ]},
+    ]
+  },
+  {
+    id: 'background', title: '背景・ロケーション', titleEn: 'Background', dot: 'cyan', modes: ['male','female','couple'],
+    subcats: [
+      { label: 'ロマンチック', labelEn: 'Romantic', items: [
+        { jp: '桜並木', en: 'cherry blossom trees' },
+        { jp: '夕焼けビーチ', en: 'sunset beach' },
+        { jp: '星空', en: 'starry night sky' },
+        { jp: '夜の屋上', en: 'rooftop at night' },
+        { jp: 'イルミネーション', en: 'illuminated city' },
+        { jp: 'キャンドルの部屋', en: 'candlelit room' },
+        { jp: '花園', en: 'flower garden' },
+        { jp: '月明かりのバルコニー', en: 'moonlit balcony' },
+        { jp: 'バラ園', en: 'rose garden' },
+      ]},
+      { label: '日常', labelEn: 'Daily', items: [
+        { jp: '教室', en: 'classroom' },
+        { jp: 'オフィス', en: 'office' },
+        { jp: 'カフェ', en: 'café' },
+        { jp: 'キッチン', en: 'kitchen' },
+        { jp: 'リビング', en: 'living room' },
+        { jp: 'ベッドルーム', en: 'bedroom' },
+        { jp: '図書館', en: 'library' },
+        { jp: '本屋', en: 'bookstore' },
+        { jp: '電車の中', en: 'inside train' },
+      ]},
+      { label: '自然', labelEn: 'Nature', items: [
+        { jp: '森', en: 'forest' },
+        { jp: '海辺の崖', en: 'seaside cliff' },
+        { jp: '山の湖', en: 'mountain lake' },
+        { jp: '雨', en: 'rain' },
+        { jp: '雪景色', en: 'snowy scenery' },
+        { jp: '紅葉', en: 'autumn leaves' },
+        { jp: '花畑', en: 'flower field' },
+        { jp: '滝', en: 'waterfall' },
+        { jp: '草原', en: 'green meadow' },
+      ]},
+      { label: '都市', labelEn: 'Urban', items: [
+        { jp: '東京の街', en: 'tokyo street' },
+        { jp: 'ネオンシティ', en: 'neon city at night' },
+        { jp: '駅のホーム', en: 'train station platform' },
+        { jp: '公園のベンチ', en: 'park bench' },
+        { jp: '夜の橋', en: 'bridge at night' },
+        { jp: '繁華街', en: 'downtown' },
+        { jp: '展望台', en: 'observation deck' },
+      ]},
+      { label: 'イベント会場', labelEn: 'Venue', items: [
+        { jp: '教会', en: 'church' },
+        { jp: '結婚式場', en: 'wedding venue' },
+        { jp: 'お祭り', en: 'japanese festival, matsuri' },
+        { jp: '花火', en: 'fireworks' },
+        { jp: '遊園地', en: 'amusement park' },
+        { jp: 'クリスマスマーケット', en: 'christmas market' },
+        { jp: '学園祭', en: 'school festival' },
+        { jp: 'レストラン', en: 'restaurant' },
+        { jp: 'バー', en: 'bar, lounge' },
+      ]},
+      { label: 'ファンタジー', labelEn: 'Fantasy', items: [
+        { jp: '城', en: 'castle' },
+        { jp: '玉座の間', en: 'throne room' },
+        { jp: '舞踏会場', en: 'ballroom' },
+        { jp: '魔法の森', en: 'enchanted forest' },
+        { jp: 'ステンドグラスの大広間', en: 'stained glass hall' },
+        { jp: '空中庭園', en: 'floating garden' },
+        { jp: '星の海', en: 'sea of stars' },
+      ]},
+    ]
+  },
+  {
+    id: 'lighting', title: 'ライティング・時間帯', titleEn: 'Lighting', dot: 'gray', modes: ['male','female','couple'],
+    subcats: [{
+      label: '', items: [
+        { jp: 'ゴールデンアワー', en: 'golden hour' },
+        { jp: '夕焼け', en: 'sunset' },
+        { jp: 'ブルーアワー', en: 'blue hour' },
+        { jp: '月光', en: 'moonlight' },
+        { jp: '逆光', en: 'backlit' },
+        { jp: 'ドラマチック照明', en: 'dramatic lighting' },
+        { jp: '柔らかい自然光', en: 'soft natural light' },
+        { jp: 'ネオンの光', en: 'neon glow' },
+        { jp: 'キャンドルの灯り', en: 'candlelight' },
+        { jp: 'スポットライト', en: 'spotlight' },
+        { jp: '朝の光', en: 'morning light' },
+        { jp: '雨の日の光', en: 'rainy day light' },
+        { jp: '木漏れ日', en: 'dappled sunlight through trees' },
+        { jp: '夕暮れ', en: 'twilight' },
+        { jp: '深夜', en: 'late night atmosphere' },
+      ]
+    }]
+  },
+  {
+    id: 'effects', title: 'エフェクト・雰囲気', titleEn: 'Effects', dot: 'pink', modes: ['male','female','couple'],
+    subcats: [
+      { label: 'キラキラ系', labelEn: 'Sparkle', items: [
+        { jp: 'きらめき', en: 'sparkles' },
+        { jp: 'グリッター', en: 'glitter effect' },
+        { jp: '光の粒子', en: 'light particles' },
+        { jp: 'レンズフレア', en: 'lens flare' },
+        { jp: 'ボケ', en: 'bokeh' },
+        { jp: '星エフェクト', en: 'star effects' },
+        { jp: 'ダイヤモンドダスト', en: 'diamond dust' },
+      ]},
+      { label: '自然系', labelEn: 'Nature', items: [
+        { jp: '桜の花びら', en: 'cherry blossom petals falling' },
+        { jp: '落ち葉', en: 'falling autumn leaves' },
+        { jp: '雪の結晶', en: 'snowflakes' },
+        { jp: '雨粒', en: 'rain drops' },
+        { jp: '舞う羽根', en: 'floating feathers' },
+        { jp: '花びら', en: 'flower petals' },
+        { jp: 'たんぽぽの綿毛', en: 'dandelion seeds' },
+        { jp: '舞い散る紙吹雪', en: 'confetti' },
+      ]},
+      { label: 'ドラマチック系', labelEn: 'Dramatic', items: [
+        { jp: '髪がなびく風', en: 'wind blowing hair and clothes' },
+        { jp: 'ドラマチックな影', en: 'dramatic shadows' },
+        { jp: '被写界深度', en: 'depth of field' },
+        { jp: '背景ぼかし', en: 'background blur' },
+        { jp: 'シネマティック照明', en: 'cinematic lighting' },
+        { jp: 'リムライト', en: 'rim light' },
+        { jp: '光芒（ゴッドレイ）', en: 'god rays' },
+        { jp: 'シルエット風', en: 'silhouette effect' },
+      ]},
+      { label: 'ファンタジー系', labelEn: 'Fantasy', items: [
+        { jp: '魔法陣', en: 'magic circles' },
+        { jp: '光る蝶', en: 'glowing butterflies' },
+        { jp: 'オーロラ', en: 'aurora borealis' },
+        { jp: 'スターダスト', en: 'stardust' },
+        { jp: '幻想的な輝き', en: 'ethereal glow' },
+        { jp: '光の翼', en: 'wings of light' },
+      ]},
+    ]
+  },
+];
+
+// ===== RENDER =====
+function renderCategories() {
+  const container = document.getElementById('categories');
+  container.innerHTML = '';
+
+  // Body Type Presets section
+  const presetHtml = `
+    <div class="category" id="cat-bodytype">
+      <div class="cat-header" onclick="toggleCat('bodytype')">
+        <h2><span class="cat-dot pink"></span>体型プリセット</h2>
+        <div style="display:flex;align-items:center;">
+          <span class="cat-count" id="count-bodytype">0</span>
+          <span class="cat-arrow">▼</span>
+        </div>
+      </div>
+      <div class="cat-body" id="body-bodytype">
+        <div class="preset-area" id="presetList"></div>
+        <button class="add-preset-btn" onclick="openAddPreset()">＋ 新しいプリセットを追加</button>
+      </div>
+    </div>
+  `;
+  container.insertAdjacentHTML('beforeend', presetHtml);
+
+  // Other categories
+  CATEGORIES.forEach(cat => {
+    const html = `
+      <div class="category ${cat.modes.includes(currentMode) ? '' : 'hidden'}" id="cat-${cat.id}" data-modes="${cat.modes.join(',')}">
+        <div class="cat-header" onclick="toggleCat('${cat.id}')">
+          <h2><span class="cat-dot ${cat.dot}"></span><span class="cat-title-text" data-jp="${cat.title}" data-en="${cat.titleEn}">${currentLang === 'jp' ? cat.title : cat.titleEn}</span></h2>
+          <div style="display:flex;align-items:center;">
+            <span class="cat-count" id="count-${cat.id}">0</span>
+            <span class="cat-arrow">▼</span>
+          </div>
+        </div>
+        <div class="cat-body" id="body-${cat.id}">
+          ${cat.subcats.map(sc => `
+            ${sc.label ? `<div class="subcat-label">${currentLang === 'jp' ? sc.label : (sc.labelEn || sc.label)}</div>` : ''}
+            <div class="tags">
+              ${sc.items.map(item => `
+                <div class="tag ${cat.dot === 'pink' ? 'pink-sel' : ''}" 
+                     data-en="${item.en}" 
+                     data-jp="${item.jp}"
+                     onclick="toggleTag(this)">
+                  ${currentLang === 'jp' ? item.jp : item.en}
+                </div>
+              `).join('')}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    container.insertAdjacentHTML('beforeend', html);
+  });
+
+  renderPresets();
+  updateCounts();
+}
+
+function renderPresets() {
+  const list = document.getElementById('presetList');
+  if (!list) return;
+
+  const relevantPresets = presets.filter(p => {
+    if (currentMode === 'male') return p.gender === 'male';
+    if (currentMode === 'female') return p.gender === 'female';
+    return true;
+  });
+
+  list.innerHTML = relevantPresets.length === 0
+    ? '<div style="color:var(--text-muted);font-size:12px;padding:8px;text-align:center;">プリセットがありません</div>'
+    : relevantPresets.map(p => {
+      const genderLabel = p.gender === 'male' ? '♂' : '♀';
+      const isSelected = selectedPresets[p.gender] === p.id;
+      return `
+        <div class="preset-card ${isSelected ? 'selected' : ''}" onclick="selectPreset('${p.id}')">
+          <div class="preset-info">
+            <div class="preset-name">${genderLabel} ${p.name}</div>
+            <div class="preset-detail">${p.height}cm / ${p.weight}kg / ${p.bodyType}</div>
+          </div>
+          <div class="preset-actions">
+            <button onclick="event.stopPropagation();openEditPreset('${p.id}')">✏️</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+}
+
+// ===== INTERACTIONS =====
+function setMode(mode) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  document.querySelectorAll('.category[data-modes]').forEach(cat => {
+    const modes = cat.dataset.modes.split(',');
+    cat.classList.toggle('hidden', !modes.includes(mode));
+  });
+  renderPresets();
+  updatePrompt();
+}
+
+function toggleCat(id) {
+  const header = document.querySelector(`#cat-${id} .cat-header`);
+  const body = document.getElementById(`body-${id}`);
+  header.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+function toggleTag(el) {
+  const en = el.dataset.en;
+  el.classList.toggle('selected');
+  if (el.classList.contains('pink-sel') && el.classList.contains('selected')) {
+    el.classList.add('pink-tag');
+  } else {
+    el.classList.remove('pink-tag');
+  }
+  if (el.classList.contains('selected')) {
+    selectedTags.add(en);
+  } else {
+    selectedTags.delete(en);
+  }
+  updateCounts();
+  updatePrompt();
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'jp' ? 'en' : 'jp';
+  // Update category titles
+  document.querySelectorAll('.cat-title-text').forEach(el => {
+    el.textContent = currentLang === 'jp' ? el.dataset.jp : el.dataset.en;
+  });
+  // Update tags
+  document.querySelectorAll('.tag').forEach(el => {
+    el.textContent = currentLang === 'jp' ? el.dataset.jp : el.dataset.en;
+  });
+  // Update subcat labels
+  // (Simplified: re-render)
+  const langBtn = document.querySelector('.lang-toggle');
+  langBtn.textContent = currentLang === 'jp' ? 'EN/JP' : 'JP/EN';
+}
+
+// ===== PRESETS =====
+function openAddPreset() {
+  editingPresetId = null;
+  document.getElementById('modalTitle').textContent = 'プリセット追加';
+  document.getElementById('presetName').value = '';
+  document.getElementById('presetGender').value = currentMode === 'female' ? 'female' : 'male';
+  document.getElementById('presetHeight').value = '';
+  document.getElementById('presetWeight').value = '';
+  document.getElementById('presetBodyType').value = 'しっかりとした身体つき';
+  document.getElementById('deletePresetBtn').style.display = 'none';
+  document.getElementById('presetModal').classList.add('show');
+}
+
+function openEditPreset(id) {
+  const p = presets.find(x => x.id === id);
+  if (!p) return;
+  editingPresetId = id;
+  document.getElementById('modalTitle').textContent = 'プリセット編集';
+  document.getElementById('presetName').value = p.name;
+  document.getElementById('presetGender').value = p.gender;
+  document.getElementById('presetHeight').value = p.height;
+  document.getElementById('presetWeight').value = p.weight;
+  document.getElementById('presetBodyType').value = p.bodyType;
+  document.getElementById('deletePresetBtn').style.display = 'block';
+  document.getElementById('presetModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('presetModal').classList.remove('show');
+}
+
+function savePreset() {
+  const name = document.getElementById('presetName').value.trim();
+  const gender = document.getElementById('presetGender').value;
+  const height = document.getElementById('presetHeight').value;
+  const weight = document.getElementById('presetWeight').value;
+  const bodyType = document.getElementById('presetBodyType').value;
+  if (!name || !height) { showToast('名前と身長を入力してね'); return; }
+
+  if (editingPresetId) {
+    const idx = presets.findIndex(x => x.id === editingPresetId);
+    if (idx >= 0) presets[idx] = { ...presets[idx], name, gender, height, weight, bodyType };
+  } else {
+    presets.push({ id: 'p' + Date.now(), name, gender, height, weight, bodyType });
+  }
+  localStorage.setItem('otomePresets', JSON.stringify(presets));
+  closeModal();
+  renderPresets();
+  updatePrompt();
+  showToast('保存しました ✨');
+}
+
+function deletePreset() {
+  if (!editingPresetId) return;
+  presets = presets.filter(x => x.id !== editingPresetId);
+  if (selectedPresets.male === editingPresetId) selectedPresets.male = null;
+  if (selectedPresets.female === editingPresetId) selectedPresets.female = null;
+  localStorage.setItem('otomePresets', JSON.stringify(presets));
+  closeModal();
+  renderPresets();
+  updatePrompt();
+  showToast('削除しました');
+}
+
+function selectPreset(id) {
+  const p = presets.find(x => x.id === id);
+  if (!p) return;
+  if (selectedPresets[p.gender] === id) {
+    selectedPresets[p.gender] = null;
+  } else {
+    selectedPresets[p.gender] = id;
+  }
+  renderPresets();
+  updateCounts();
+  updatePrompt();
+}
+
+// ===== PROMPT BUILDING =====
+function updatePrompt() {
+  const parts = [];
+
+  // Tags (English)
+  if (selectedTags.size > 0) {
+    parts.push([...selectedTags].join(', '));
+  }
+
+  // Person count
+  if (currentMode === 'male') parts.unshift('1boy');
+  else if (currentMode === 'female') parts.unshift('1girl');
+  else if (currentMode === 'couple') parts.unshift('1boy, 1girl');
+
+  // Body type presets (Japanese)
+  const bodyParts = [];
+  if (currentMode === 'male' || currentMode === 'couple') {
+    const mp = presets.find(x => x.id === selectedPresets.male);
+    if (mp) bodyParts.push(`男性、${mp.height}センチ、${mp.weight ? mp.weight + 'キロ、' : ''}${mp.bodyType}`);
+  }
+  if (currentMode === 'female' || currentMode === 'couple') {
+    const fp = presets.find(x => x.id === selectedPresets.female);
+    if (fp) bodyParts.push(`女性、${fp.height}センチ、${fp.weight ? fp.weight + 'キロ、' : ''}${fp.bodyType}`);
+  }
+  if (bodyParts.length > 0) parts.push(bodyParts.join('。') + '。');
+
+  // Free text
+  const freeText = document.getElementById('freeText').value.trim();
+  if (freeText) parts.push(freeText);
+
+  const prompt = parts.join(', ');
+  document.getElementById('promptBox').textContent = prompt;
+}
+
+function updateCounts() {
+  CATEGORIES.forEach(cat => {
+    const countEl = document.getElementById(`count-${cat.id}`);
+    if (!countEl) return;
+    let count = 0;
+    cat.subcats.forEach(sc => {
+      sc.items.forEach(item => {
+        if (selectedTags.has(item.en)) count++;
+      });
+    });
+    countEl.textContent = count > 0 ? count : '';
+  });
+
+  // Preset count
+  const presetCount = document.getElementById('count-bodytype');
+  if (presetCount) {
+    let c = 0;
+    if (selectedPresets.male) c++;
+    if (selectedPresets.female) c++;
+    presetCount.textContent = c > 0 ? c : '';
+  }
+}
+
+function copyPrompt() {
+  const text = document.getElementById('promptBox').textContent;
+  if (!text) { showToast('プロンプトがないよ！'); return; }
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.classList.add('copied');
+    btn.textContent = '✅ コピーしました！';
+    showToast('コピー完了！🎉');
+    setTimeout(() => {
+      btn.classList.remove('copied');
+      btn.textContent = '📋 コピー';
+    }, 2000);
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('コピー完了！🎉');
+  });
+}
+
+function clearAll() {
+  selectedTags.clear();
+  selectedPresets = { male: null, female: null };
+  document.querySelectorAll('.tag.selected').forEach(t => {
+    t.classList.remove('selected', 'pink-tag');
+  });
+  document.getElementById('freeText').value = '';
+  renderPresets();
+  updateCounts();
+  updatePrompt();
+  showToast('全消去しました');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1500);
+}
+
+// ===== INIT =====
+renderCategories();
+updatePrompt();
+</script>
+</body>
+</html>

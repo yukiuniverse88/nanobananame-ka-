@@ -85,8 +85,26 @@ body{font-family:var(--font-body);background:var(--bg-primary);color:var(--text-
 .prompt-header-label{font-size:11px;color:var(--text-muted)}
 .prompt-lang-btn{background:var(--bg-card);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:10px;color:var(--accent-pink);cursor:pointer;font-family:var(--font-body)}
 .prompt-lang-btn.active{background:var(--accent-pink-dim);border-color:var(--accent-pink)}
-.prompt-box{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;min-height:60px;max-height:100px;overflow-y:auto;font-size:12px;color:var(--text-secondary);line-height:1.6;word-break:break-all;margin-bottom:8px}
-.prompt-box:empty::before{content:'タグを選択するとプロンプトが表示されます...';color:var(--text-muted)}
+.prompt-chips{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;min-height:60px;max-height:120px;overflow-y:auto;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start}
+.prompt-chips:empty::before{content:'タグを選択するとプロンプトが表示されます...';color:var(--text-muted);font-size:12px;padding:4px}
+.p-chip{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:12px;font-size:11px;background:var(--accent-cyan-dim);color:var(--accent-cyan);border:1px solid rgba(126,200,212,0.3);white-space:nowrap}
+.p-chip.body-chip{background:var(--accent-pink-dim);color:var(--accent-pink);border-color:rgba(212,160,185,0.3)}
+.p-chip.aspect-chip{background:var(--accent-gray-dim);color:var(--accent-gray);border-color:rgba(138,138,158,0.3)}
+.p-chip.free-chip{background:rgba(255,255,255,0.05);color:var(--text-secondary);border-color:var(--border)}
+.p-chip .chip-x{cursor:pointer;font-size:13px;opacity:0.6;margin-left:2px;line-height:1}
+.p-chip .chip-x:hover{opacity:1}
+/* Templates */
+.template-section{margin:8px 12px}
+.template-section label{font-size:12px;color:var(--text-muted);margin-bottom:6px;display:block}
+.template-tags{display:flex;flex-wrap:wrap;gap:6px}
+.template-tag{padding:8px 14px;border-radius:var(--radius-tag);border:1px solid rgba(212,160,185,0.3);background:rgba(212,160,185,0.08);color:var(--accent-pink);font-size:12px;cursor:pointer;transition:all .25s;user-select:none}
+.template-tag:active{transform:scale(0.95)}
+.template-tag.active{background:var(--accent-pink-dim);border-color:var(--accent-pink)}
+/* Phrases */
+.phrase-section{margin:8px 12px}
+.phrase-section label{font-size:12px;color:var(--text-muted);margin-bottom:6px;display:block}
+.phrase-tags{display:flex;flex-wrap:wrap;gap:6px}
+.phrase-tag{padding:6px 12px;border-radius:var(--radius-tag);border:1px solid var(--border);background:var(--bg-card);color:var(--text-secondary);font-size:11px;cursor:pointer;transition:all .25s}
 .prompt-actions{display:flex;gap:8px}
 .copy-btn{flex:1;padding:12px;border-radius:var(--radius-sm);border:none;font-family:var(--font-body);font-size:14px;font-weight:700;cursor:pointer;background:linear-gradient(135deg,var(--accent-cyan),var(--accent-pink));color:var(--bg-primary);letter-spacing:1px}
 .copy-btn:active{transform:scale(0.97);opacity:.8}
@@ -112,14 +130,22 @@ body{font-family:var(--font-body);background:var(--bg-primary);color:var(--text-
 <button class="aspect-btn" data-aspect="square" onclick="setAspect('square')"><span class="aspect-icon square"></span>正方形</button>
 <button class="aspect-btn active" data-aspect="none" onclick="setAspect('none')">指定なし</button>
 </div>
+<div class="template-section">
+<label>🎬 おすすめテンプレート（一括セット）</label>
+<div class="template-tags" id="templateTags"></div>
+</div>
 <div id="categories"></div>
+<div class="phrase-section">
+<label>💬 よく使うフレーズ（タップでフリーテキストに追加）</label>
+<div class="phrase-tags" id="phraseTags"></div>
+</div>
 <div class="free-text-area"><label>✏️ フリーテキスト（自由入力）</label><textarea id="freeText" placeholder="参照画像への指示文やその他追加プロンプトを入力..." oninput="updatePrompt()"></textarea></div>
 <div class="prompt-output">
 <div class="prompt-header">
-<span class="prompt-header-label" id="promptLabel">プロンプト（英語）</span>
+<span class="prompt-header-label" id="promptLabel">プロンプト（タップで削除）</span>
 <button class="prompt-lang-btn" id="promptLangBtn" onclick="togglePromptLang()">日本語で見る</button>
 </div>
-<div class="prompt-box" id="promptBox"></div>
+<div class="prompt-chips" id="promptChips"></div>
 <div class="prompt-actions"><button class="copy-btn" id="copyBtn" onclick="copyPrompt()">📋 コピー</button><button class="clear-btn" onclick="clearAll()">🗑 全消去</button></div>
 </div>
 <div class="modal-overlay" id="presetModal"><div class="modal"><h3 id="modalTitle">プリセット追加</h3><label>キャラ名</label><input type="text" id="presetName" placeholder="例：雪間"><label>性別</label><select id="presetGender"><option value="male">男性</option><option value="female">女性</option></select><label>身長（cm）</label><input type="number" id="presetHeight" placeholder="185"><label>体重（kg）</label><input type="number" id="presetWeight" placeholder="85"><label>体型タイプ</label><select id="presetBodyType"><option value="ぽっちゃりとした体型">ぽっちゃりとした体型</option><option value="しっかりとした身体つき">しっかりとした身体つき</option><option value="筋肉質な体型">筋肉質な体型</option><option value="細身の体型">細身の体型</option><option value="スレンダーな体型">スレンダーな体型</option><option value="グラマラスな体型">グラマラスな体型</option></select><div class="modal-btns"><button class="btn-cancel" onclick="closeModal()">キャンセル</button><button class="btn-delete" id="deletePresetBtn" onclick="deletePreset()" style="display:none">削除</button><button class="btn-save" onclick="savePreset()">保存</button></div></div></div>
@@ -127,6 +153,27 @@ body{font-family:var(--font-body);background:var(--bg-primary);color:var(--text-
 <script>
 let currentMode='male',currentLang='jp',currentAspect='none',promptLang='en',selectedTags=new Set(),selectedPresets={male:null,female:null},presets=JSON.parse(localStorage.getItem('otomePresets')||'[]'),editingPresetId=null;
 const ASPECT_MAP={portrait:'portrait orientation, 2:3 aspect ratio',landscape:'landscape orientation, 3:2 aspect ratio',square:'square image, 1:1 aspect ratio',none:''};
+
+const TEMPLATES=[
+{name:'🌸 桜デートセット',tags:['best quality','otome game CG','cherry blossom trees','cherry blossom petals falling','soft natural light','bokeh','gentle smile']},
+{name:'❄️ 雪夜の告白',tags:['masterpiece','otome game CG','snowy scenery','snowflakes','moonlight','dramatic lighting','blushing']},
+{name:'🌅 夕焼けビーチ',tags:['best quality','cinematic anime','sunset beach','golden hour','wind blowing hair and clothes','soft gaze']},
+{name:'💒 教会スチル',tags:['masterpiece','otome game CG','stained glass hall','light particles','god rays','dramatic lighting','sparkles']},
+{name:'🎆 お祭りデート',tags:['best quality','otome game CG','japanese festival, matsuri','fireworks','vivid colors','bright smile','bokeh']},
+{name:'🌙 月夜のバルコニー',tags:['masterpiece','cinematic anime','moonlit balcony','moonlight','sparkles','rim light','seductive gaze']},
+{name:'☕ カフェの日常',tags:['best quality','soft anime aesthetic','café','soft natural light','drinking coffee','gentle smile','bokeh']},
+{name:'🏋️ 筋トレシーン',tags:['best quality','dramatic illustration','gym clothes','working out, lifting weights','dramatic lighting','intense eyes']},
+{name:'🌧️ 雨の再会',tags:['masterpiece','cinematic anime','rain','rain drops','dramatic lighting','teary eyes','wind blowing hair and clothes']},
+{name:'✨ ファンタジー王子',tags:['masterpiece','otome game CG','royal prince outfit','castle','ethereal glow','sparkles','confident smirk']},
+];
+
+const PHRASES=[
+'微笑みながら','優しく見つめながら','振り返りながら','手を差し出しながら',
+'風に吹かれながら','桜の花びらが舞う中で','雪が降る中で','夕日を背に',
+'月明かりの下で','キラキラと輝く','ドラマチックに','幻想的な雰囲気で',
+'二人の距離が近い','目が合った瞬間','自然体で','乙女ゲームの一枚スチルのように',
+'カメラワークや構図にもこだわって','背景ぼかしてグリッターエフェクト入れて',
+];
 
 // Guide data per category
 const GUIDE={
@@ -261,7 +308,7 @@ function toggleHelpTag(el){const en=el.dataset.en;if(selectedTags.has(en)){selec
 function syncHelpTags(en){document.querySelectorAll('.help-tag[data-en="'+en+'"]').forEach(ht=>{if(selectedTags.has(en)){ht.classList.add('selected');ht.querySelector('.ht-plus').textContent='✓'}else{ht.classList.remove('selected');ht.querySelector('.ht-plus').textContent='+'}})}
 function syncMainTags(en){document.querySelectorAll('.tag[data-en="'+en+'"]').forEach(t=>{if(selectedTags.has(en)){t.classList.add('selected');if(t.classList.contains('pink-sel'))t.classList.add('pink-tag')}else{t.classList.remove('selected','pink-tag')}})}
 function toggleLang(){currentLang=currentLang==='jp'?'en':'jp';document.querySelectorAll('.cat-title-text').forEach(el=>{el.textContent=currentLang==='jp'?el.dataset.jp:el.dataset.en});document.querySelectorAll('.tag').forEach(el=>{el.textContent=currentLang==='jp'?el.dataset.jp:el.dataset.en})}
-function togglePromptLang(){promptLang=promptLang==='en'?'jp':'en';const btn=document.getElementById('promptLangBtn');const label=document.getElementById('promptLabel');if(promptLang==='jp'){btn.textContent='英語で見る';btn.classList.add('active');label.textContent='プロンプト（日本語表示）'}else{btn.textContent='日本語で見る';btn.classList.remove('active');label.textContent='プロンプト（英語）'}updatePrompt()}
+function togglePromptLang(){promptLang=promptLang==='en'?'jp':'en';const btn=document.getElementById('promptLangBtn');const label=document.getElementById('promptLabel');if(promptLang==='jp'){btn.textContent='英語で見る';btn.classList.add('active');label.textContent='プロンプト（日本語 - タップで削除）'}else{btn.textContent='日本語で見る';btn.classList.remove('active');label.textContent='プロンプト（タップで削除）'}updatePrompt()}
 
 function openAddPreset(){editingPresetId=null;document.getElementById('modalTitle').textContent='プリセット追加';document.getElementById('presetName').value='';document.getElementById('presetGender').value=currentMode==='female'?'female':'male';document.getElementById('presetHeight').value='';document.getElementById('presetWeight').value='';document.getElementById('presetBodyType').value='しっかりとした身体つき';document.getElementById('deletePresetBtn').style.display='none';document.getElementById('presetModal').classList.add('show')}
 function openEditPreset(id){const p=presets.find(x=>x.id===id);if(!p)return;editingPresetId=id;document.getElementById('modalTitle').textContent='プリセット編集';document.getElementById('presetName').value=p.name;document.getElementById('presetGender').value=p.gender;document.getElementById('presetHeight').value=p.height;document.getElementById('presetWeight').value=p.weight;document.getElementById('presetBodyType').value=p.bodyType;document.getElementById('deletePresetBtn').style.display='block';document.getElementById('presetModal').classList.add('show')}
@@ -271,26 +318,69 @@ function deletePreset(){if(!editingPresetId)return;presets=presets.filter(x=>x.i
 function selectPreset(id){const p=presets.find(x=>x.id===id);if(!p)return;selectedPresets[p.gender]=selectedPresets[p.gender]===id?null:id;renderPresets();updateCounts();updatePrompt()}
 
 function updatePrompt(){
-const parts=[];const partsJp=[];
-if(currentAspect!=='none'&&ASPECT_MAP[currentAspect]){parts.push(ASPECT_MAP[currentAspect]);partsJp.push({portrait:'縦長 2:3',landscape:'横長 3:2',square:'正方形 1:1'}[currentAspect]||'')}
-const tags=[...selectedTags];
-if(tags.length>0){parts.push(tags.join(', '));partsJp.push(tags.map(t=>enToJp[t]||t).join(', '))}
-const bp=[];const bpJp=[];
-if(currentMode==='male'||currentMode==='couple'){const mp=presets.find(x=>x.id===selectedPresets.male);if(mp){const s='男性、'+mp.height+'センチ、'+(mp.weight?mp.weight+'キロ、':'')+mp.bodyType;bp.push(s);bpJp.push(s)}}
-if(currentMode==='female'||currentMode==='couple'){const fp=presets.find(x=>x.id===selectedPresets.female);if(fp){const s='女性、'+fp.height+'センチ、'+(fp.weight?fp.weight+'キロ、':'')+fp.bodyType;bp.push(s);bpJp.push(s)}}
-if(bp.length>0){parts.push(bp.join('。')+'。');partsJp.push(bpJp.join('。')+'。')}
+const box=document.getElementById('promptChips');
+box.innerHTML='';
+let enParts=[];
+// Aspect chip
+if(currentAspect!=='none'&&ASPECT_MAP[currentAspect]){
+const aspJp={portrait:'縦長 2:3',landscape:'横長 3:2',square:'正方形 1:1'}[currentAspect]||'';
+const label=promptLang==='jp'?aspJp:ASPECT_MAP[currentAspect];
+box.innerHTML+='<span class="p-chip aspect-chip">'+label+'<span class="chip-x" onclick="removeAspect()">✕</span></span>';
+enParts.push(ASPECT_MAP[currentAspect]);
+}
+// Tag chips
+[...selectedTags].forEach(en=>{
+const jp=enToJp[en]||en;
+const label=promptLang==='jp'?jp:en;
+box.innerHTML+='<span class="p-chip">'+label+'<span class="chip-x" onclick="removeTag(\''+en.replace(/'/g,"\\'")+'\')">✕</span></span>';
+enParts.push(en);
+});
+// Body preset chips
+if(currentMode==='male'||currentMode==='couple'){const mp=presets.find(x=>x.id===selectedPresets.male);if(mp){const s='男性、'+mp.height+'センチ、'+(mp.weight?mp.weight+'キロ、':'')+mp.bodyType;box.innerHTML+='<span class="p-chip body-chip">'+s+'<span class="chip-x" onclick="removeBodyPreset(\'male\')">✕</span></span>';enParts.push(s)}}
+if(currentMode==='female'||currentMode==='couple'){const fp=presets.find(x=>x.id===selectedPresets.female);if(fp){const s='女性、'+fp.height+'センチ、'+(fp.weight?fp.weight+'キロ、':'')+fp.bodyType;box.innerHTML+='<span class="p-chip body-chip">'+s+'<span class="chip-x" onclick="removeBodyPreset(\'female\')">✕</span></span>';enParts.push(s)}}
+// Free text chip
 const ft=document.getElementById('freeText').value.trim();
-if(ft){parts.push(ft);partsJp.push(ft)}
-const box=document.getElementById('promptBox');
-if(promptLang==='jp'){box.textContent=partsJp.join(', ')}else{box.textContent=parts.join(', ')}
-box.dataset.enPrompt=parts.join(', ');
+if(ft){box.innerHTML+='<span class="p-chip free-chip">'+ft.substring(0,40)+(ft.length>40?'...':'')+'</span>';enParts.push(ft)}
+box.dataset.enPrompt=enParts.join(', ');
 }
 
+function removeTag(en){selectedTags.delete(en);syncMainTags(en);syncHelpTags(en);updateCounts();updatePrompt()}
+function removeAspect(){currentAspect='none';document.querySelectorAll('.aspect-btn').forEach(b=>b.classList.toggle('active',b.dataset.aspect==='none'));updatePrompt()}
+function removeBodyPreset(gender){selectedPresets[gender]=null;renderPresets();updateCounts();updatePrompt()}
+
 function updateCounts(){C.forEach(cat=>{const el=document.getElementById('count-'+cat.id);if(!el)return;let c=0;cat.subcats.forEach(sc=>sc.items.forEach(item=>{if(selectedTags.has(item.en))c++}));el.textContent=c>0?c:''});const pe=document.getElementById('count-bodytype');if(pe){let c=0;if(selectedPresets.male)c++;if(selectedPresets.female)c++;pe.textContent=c>0?c:''}}
-function copyPrompt(){const text=document.getElementById('promptBox').dataset.enPrompt||document.getElementById('promptBox').textContent;if(!text){showToast('プロンプトがないよ！');return}navigator.clipboard.writeText(text).then(()=>{const btn=document.getElementById('copyBtn');btn.classList.add('copied');btn.textContent='✅ コピー完了！';showToast('コピー完了！🎉');setTimeout(()=>{btn.classList.remove('copied');btn.textContent='📋 コピー'},2000)}).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('コピー完了！🎉')})}
-function clearAll(){selectedTags.clear();selectedPresets={male:null,female:null};currentAspect='none';document.querySelectorAll('.aspect-btn').forEach(b=>b.classList.toggle('active',b.dataset.aspect==='none'));document.getElementById('freeText').value='';renderCategories();updatePrompt();showToast('全消去しました')}
+
+function copyPrompt(){const text=document.getElementById('promptChips').dataset.enPrompt||'';if(!text){showToast('プロンプトがないよ！');return}navigator.clipboard.writeText(text).then(()=>{const btn=document.getElementById('copyBtn');btn.classList.add('copied');btn.textContent='✅ コピー完了！';showToast('コピー完了！🎉');setTimeout(()=>{btn.classList.remove('copied');btn.textContent='📋 コピー'},2000)}).catch(()=>{const ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast('コピー完了！🎉')})}
+
+function clearAll(){selectedTags.clear();selectedPresets={male:null,female:null};currentAspect='none';document.querySelectorAll('.aspect-btn').forEach(b=>b.classList.toggle('active',b.dataset.aspect==='none'));document.getElementById('freeText').value='';renderCategories();renderTemplates();updatePrompt();showToast('全消去しました')}
+
+// Templates
+function renderTemplates(){
+const c=document.getElementById('templateTags');
+c.innerHTML=TEMPLATES.map((t,i)=>'<div class="template-tag" data-idx="'+i+'" onclick="applyTemplate('+i+')">'+t.name+'</div>').join('');
+}
+function applyTemplate(idx){
+const t=TEMPLATES[idx];if(!t)return;
+t.tags.forEach(en=>{selectedTags.add(en);syncMainTags(en);syncHelpTags(en)});
+updateCounts();updatePrompt();
+showToast(t.name+' 適用！');
+}
+
+// Phrases
+function renderPhrases(){
+const c=document.getElementById('phraseTags');
+c.innerHTML=PHRASES.map(p=>'<div class="phrase-tag" onclick="addPhrase(this)">'+p+'</div>').join('');
+}
+function addPhrase(el){
+const ta=document.getElementById('freeText');
+const v=ta.value;
+ta.value=v+(v&&!v.endsWith(' ')&&!v.endsWith('\n')?'':'')+el.textContent;
+updatePrompt();
+showToast('追加しました');
+}
+
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1500)}
-renderCategories();updatePrompt();
+renderCategories();renderTemplates();renderPhrases();updatePrompt();
 </script>
 </body>
 </html>
